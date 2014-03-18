@@ -1,0 +1,22 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#88999999"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".MainActivity" >
+	<com.example.foolframeworksample.MyFoolListView
+ 	    xmlns:ffw="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        
+        android:id="@+id/foolview"
+        android:background="#EEE999"
+        ffw:divider="@drawable/divider_horizontal_dark_opaque"
+        ffw:dividerHeight="1dp"
+        ffw:pulldeltaDistance = "30dp"
+        />
+</RelativeLayout>

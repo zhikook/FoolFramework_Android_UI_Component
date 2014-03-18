@@ -1,0 +1,15 @@
+<resources>
+    <style name="foolview_style" >
+        <item name="divider">@drawable/listview_divider_line</item>
+        <item name="dividerHeight">1.0dip</item>
+        <item name="pulldeltaDistance">30.0dip</item>
+    </style>
+
+    <style name="FoolView">
+       <item name="android:listSelector">@android:drawable/list_selector_background</item>
+       <item name="android:cacheColorHint">?android:attr/colorBackgroundCacheHint</item>
+        <item name="android:divider">@drawable/divider_horizontal_dark_opaque</item>
+         <item name="android:dividerHeight">1.0dip</item>
+    </style>
+    
+</resources>

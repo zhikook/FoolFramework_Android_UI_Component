@@ -1,0 +1,9 @@
+<resources>
+
+    <string name="app_name">FoolFramework_MySweet</string>
+	<string name="inner_text">Haha,I am Inner!!!</string>
+   	<string name="inner_btn_ready">Are You Ready?</string>
+    <string name="inner_btn_go">Go</string>
+	<string name="inner_btn_exit">Bye,bye!</string>
+    
+</resources>

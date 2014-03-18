@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<zy.fool.widget.ItemInnerView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/innerView"
+    android:layout_width="40dp"
+    android:layout_height="10dp"
+    android:background="#333666"
+    android:layout_marginLeft="0dp"/>
