@@ -15,6 +15,12 @@ the framework is based on AbsListView class，in actual condition , It needs som
 
 ![FoolFramework](https://raw.github.com/zhikook/FoolFramework_Android_UI_Component/master/slide.png)
 ***********************************************************************************************
+*-------DEMO SHOW-------*
+***********************************************************************************************
+![FoolFramework](https://raw.github.com/zhikook/FoolFramework_Android_UI_Component/master/demo01.png)
+
+![FoolFramework](https://raw.github.com/zhikook/FoolFramework_Android_UI_Component/master/demo02.png)
+***********************************************************************************************
 ## Usage
 
 Need to create a subclass that extends FooView and layout in the xml file, with import FoollistView.jar 
