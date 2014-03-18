@@ -1,6 +1,6 @@
-#Fool-ListView-Framework  UNFINSIHED
+#FoolFramework  Android UI Component *NFINSIHED*
 
-Android UI ,Special ListView Framework, Version 0.488
+Version 0.3655
 
 ## Framework Priview
 
@@ -11,9 +11,9 @@ Android UI ,Special ListView Framework, Version 0.488
 the framework is based on AbsListView class，in actual condition , It needs some new gestures,such as pull out /in (Pointers-Spread ,Pointers-pinch), not from top or bottom,but for special position. the framework can recognize these gesture,and provides interfaces such as onPull Out/in Listener、onSlide Left/Right Listener. besides scrolling, the widget can layout as spot-display.the usage introduce more details .
 
 ***********************************************************************************************
-![Fool-ListView-Framework](https://raw.github.com/zhikook/Fool-ListView-Framework/master/pullinout.png)
+![FoolFramework](https://raw.github.com/zhikook/FoolFramework_Android_UI_Component/master/pullinout.png)
 
-![Fool-ListView-Framework](https://raw.github.com/zhikook/Fool-ListView-Framework/master/slide.png)
+![FoolFramework](https://raw.github.com/zhikook/FoolFramework_Android_UI_Component/master/slide.png)
 ***********************************************************************************************
 ## Usage
 
@@ -28,6 +28,7 @@ which contains baseclasses and others.
     android:id="@+id/foollist"
     android:layout_height="fill_parent"
     android:layout_width="fill_parent"
+    ....
     />
     ...
 ```
