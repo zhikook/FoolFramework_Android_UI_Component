@@ -22,7 +22,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
         /** <p>Must be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
          */
-        public static final int FoolViewStyle=0x7f010004;
+        public static final int FoolViewStyle=0x7f010006;
         /**  Indicates that this list will always be drawn on top of solid, single-color
          opaque background. This allows the list to optimize drawing. 
          <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
@@ -33,7 +33,7 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int cacheColorHint=0x7f010009;
+        public static final int cacheColorHint=0x7f01000b;
         /**  Enables the fast scroll thumb that can be dragged to quickly scroll through
              the list. 
          <p>Must be one of the following constant values.</p>
@@ -48,7 +48,7 @@ containing a value of this type.
 <tr><td><code>multipleChoiceModal</code></td><td>3</td><td> The list allows multiple choices in a custom selection mode. </td></tr>
 </table>
          */
-        public static final int choiceMode=0x7f01000a;
+        public static final int choiceMode=0x7f01000c;
         /**  Reference to an array resource that will populate the ListView.  For static content,
              this is simpler than populating the ListView programmatically. 
  Drawable or color to draw between list items. 
@@ -80,14 +80,34 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int drawSelectorOnTop=0x7f010006;
+        public static final int drawSelectorOnTop=0x7f010008;
+        /** <p>Must be a dimension value, which is a floating point number appended with a unit such as "<code>14.5sp</code>".
+Available units are: px (pixels), dp (density-independent pixels), sp (scaled pixels based on preferred font size),
+in (inches), mm (millimeters).
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+         */
+        public static final int innerWindowHeight=0x7f010005;
+        /** <p>Must be a dimension value, which is a floating point number appended with a unit such as "<code>14.5sp</code>".
+Available units are: px (pixels), dp (density-independent pixels), sp (scaled pixels based on preferred font size),
+in (inches), mm (millimeters).
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+         */
+        public static final int innerWindowWidth=0x7f010004;
         /**  Drawable used to indicate the currently selected item in the list. 
          <p>May be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
 <p>May be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
 "<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
          */
-        public static final int listSelector=0x7f010005;
+        public static final int listSelector=0x7f010007;
         /**  When set to false, the ListView will not draw the divider after each header view.
              The default value is true. 
          <p>Must be a dimension value, which is a floating point number appended with a unit such as "<code>14.5sp</code>".
@@ -110,7 +130,7 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int pullingCache=0x7f010008;
+        public static final int pullingCache=0x7f01000a;
         /**  Used by ListView and GridView to stack their content from the bottom. 
          <p>Must be a boolean value, either "<code>true</code>" or "<code>false</code>".
 <p>This may also be a reference to a resource (in the form
@@ -119,14 +139,14 @@ theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
          */
-        public static final int stackFromBottom=0x7f010007;
+        public static final int stackFromBottom=0x7f010009;
         /**  BELOW HERE ARE DEPRECEATED. DO NOT USE. 
          <p>May be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
 <p>May be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
 "<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
          */
-        public static final int strAdapterViewBackground=0x7f01001b;
+        public static final int strAdapterViewBackground=0x7f01001d;
         /**  Style of Animation should be used displayed when pulling. 
          <p>Must be one or more (separated by '|') of the following constant values.</p>
 <table>
@@ -138,56 +158,56 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
 <tr><td><code>flip</code></td><td>0x1</td><td></td></tr>
 </table>
          */
-        public static final int strAnimationStyle=0x7f010017;
+        public static final int strAnimationStyle=0x7f010019;
         /**  Drawable to use as Loading Indicator. Changes both Lefter and Righter. 
          <p>Must be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
          */
-        public static final int strDrawable=0x7f010011;
+        public static final int strDrawable=0x7f010013;
         /** <p>Must be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
          */
-        public static final int strDrawableBottom=0x7f01001d;
+        public static final int strDrawableBottom=0x7f01001f;
         /**  Drawable to use as Loading Indicator in the Righter View. Overrides value set in strDrawable. 
          <p>Must be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
          */
-        public static final int strDrawableEnd=0x7f010013;
+        public static final int strDrawableEnd=0x7f010015;
         /**  Drawable to use as Loading Indicator in the Lefter View. Overrides value set in strDrawable. 
          <p>Must be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
          */
-        public static final int strDrawableStart=0x7f010012;
+        public static final int strDrawableStart=0x7f010014;
         /** <p>Must be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
          */
-        public static final int strDrawableTop=0x7f01001c;
+        public static final int strDrawableTop=0x7f01001e;
         /**  A drawable to use as the background of the Lefter and Righter Loading Views 
          <p>May be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
 <p>May be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
 "<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
          */
-        public static final int strLefterBackground=0x7f01000c;
+        public static final int strLefterBackground=0x7f01000e;
         /**  Text Color of the Lefter and Righter Loading Views Sub Lefter 
          <p>May be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
 <p>May be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
 "<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
          */
-        public static final int strLefterSubTextColor=0x7f01000e;
+        public static final int strLefterSubTextColor=0x7f010010;
         /**  Base text color, typeface, size, and style for Lefter and Righter Loading Views 
          <p>Must be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
          */
-        public static final int strLefterTextAppearance=0x7f010015;
+        public static final int strLefterTextAppearance=0x7f010017;
         /**  Text Color of the Lefter and Righter Loading Views 
          <p>May be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
 <p>May be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
 "<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
          */
-        public static final int strLefterTextColor=0x7f01000d;
+        public static final int strLefterTextColor=0x7f01000f;
         /** 
         	Whether SlideToRefreshListView has it's extras enabled. This allows the user to be 
         	able to scroll while refreshing, and behaves better. It acheives this by adding
@@ -197,7 +217,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
 <p>May be a boolean value, either "<code>true</code>" or "<code>false</code>".
          */
-        public static final int strListViewExtrasEnabled=0x7f010019;
+        public static final int strListViewExtrasEnabled=0x7f01001b;
         /**  Mode of Pull-to-Refresh that should be used 
          <p>Must be one or more (separated by '|') of the following constant values.</p>
 <table>
@@ -212,20 +232,20 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
 <tr><td><code>manualOnly</code></td><td>0x4</td><td></td></tr>
 </table>
          */
-        public static final int strMode=0x7f01000f;
+        public static final int strMode=0x7f010011;
         /**  Whether Android's built-in Over Scroll should be utilised for Pull-to-Refresh. 
          <p>May be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
 <p>May be a boolean value, either "<code>true</code>" or "<code>false</code>".
          */
-        public static final int strOverScroll=0x7f010014;
+        public static final int strOverScroll=0x7f010016;
         /**  A drawable to use as the background of the Refreshable View 
          <p>May be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
 <p>May be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
 "<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
          */
-        public static final int strRefreshableViewBackground=0x7f01000b;
+        public static final int strRefreshableViewBackground=0x7f01000d;
         /** 
         	Whether the Drawable should be continually rotated as you pull. This only
         	takes effect when using the 'Rotate' Animation Style.
@@ -234,24 +254,24 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
 <p>May be a boolean value, either "<code>true</code>" or "<code>false</code>".
          */
-        public static final int strRotateDrawableWhileSliding=0x7f01001a;
+        public static final int strRotateDrawableWhileSliding=0x7f01001c;
         /**  Whether the user can scroll while the View is Refreshing 
          <p>May be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
 <p>May be a boolean value, either "<code>true</code>" or "<code>false</code>".
          */
-        public static final int strScrollingWhileRefreshingEnabled=0x7f010018;
+        public static final int strScrollingWhileRefreshingEnabled=0x7f01001a;
         /**  Whether the Indicator overlay(s) should be used 
          <p>May be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
 <p>May be a boolean value, either "<code>true</code>" or "<code>false</code>".
          */
-        public static final int strShowIndicator=0x7f010010;
+        public static final int strShowIndicator=0x7f010012;
         /**  Base text color, typeface, size, and style for Lefter and Righter Loading Views Sub Lefter 
          <p>Must be a reference to another resource, in the form "<code>@[+][<i>package</i>:]<i>type</i>:<i>name</i></code>"
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
          */
-        public static final int strSubLefterTextAppearance=0x7f010016;
+        public static final int strSubLefterTextAppearance=0x7f010018;
     }
     public static final class color {
         public static final int author_text=0x7f060019;
@@ -435,8 +455,8 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
            @see #AbsFoolView_stackFromBottom
          */
         public static final int[] AbsFoolView = {
-            0x7f010005, 0x7f010006, 0x7f010007, 0x7f010008,
-            0x7f010009, 0x7f01000a
+            0x7f010007, 0x7f010008, 0x7f010009, 0x7f01000a,
+            0x7f01000b, 0x7f01000c
         };
         /**
           <p>
@@ -553,15 +573,20 @@ containing a value of this type.
            <tr><td><code>{@link #FoolListView_FoolListView com.example.foolframeworksample:FoolListView}</code></td><td></td></tr>
            <tr><td><code>{@link #FoolListView_divider com.example.foolframeworksample:divider}</code></td><td> Reference to an array resource that will populate the ListView.</td></tr>
            <tr><td><code>{@link #FoolListView_dividerHeight com.example.foolframeworksample:dividerHeight}</code></td><td> Height of the divider.</td></tr>
+           <tr><td><code>{@link #FoolListView_innerWindowHeight com.example.foolframeworksample:innerWindowHeight}</code></td><td></td></tr>
+           <tr><td><code>{@link #FoolListView_innerWindowWidth com.example.foolframeworksample:innerWindowWidth}</code></td><td></td></tr>
            <tr><td><code>{@link #FoolListView_pulldeltaDistance com.example.foolframeworksample:pulldeltaDistance}</code></td><td> When set to false, the ListView will not draw the divider after each header view.</td></tr>
            </table>
            @see #FoolListView_FoolListView
            @see #FoolListView_divider
            @see #FoolListView_dividerHeight
+           @see #FoolListView_innerWindowHeight
+           @see #FoolListView_innerWindowWidth
            @see #FoolListView_pulldeltaDistance
          */
         public static final int[] FoolListView = {
-            0x7f010000, 0x7f010001, 0x7f010002, 0x7f010003
+            0x7f010000, 0x7f010001, 0x7f010002, 0x7f010003,
+            0x7f010004, 0x7f010005
         };
         /**
           <p>This symbol is the offset where the {@link com.example.foolframeworksample.R.attr#FoolListView}
@@ -608,6 +633,38 @@ containing a value of this type.
           @attr name com.example.foolframeworksample:dividerHeight
         */
         public static final int FoolListView_dividerHeight = 2;
+        /**
+          <p>This symbol is the offset where the {@link com.example.foolframeworksample.R.attr#innerWindowHeight}
+          attribute's value can be found in the {@link #FoolListView} array.
+
+
+          <p>Must be a dimension value, which is a floating point number appended with a unit such as "<code>14.5sp</code>".
+Available units are: px (pixels), dp (density-independent pixels), sp (scaled pixels based on preferred font size),
+in (inches), mm (millimeters).
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name com.example.foolframeworksample:innerWindowHeight
+        */
+        public static final int FoolListView_innerWindowHeight = 5;
+        /**
+          <p>This symbol is the offset where the {@link com.example.foolframeworksample.R.attr#innerWindowWidth}
+          attribute's value can be found in the {@link #FoolListView} array.
+
+
+          <p>Must be a dimension value, which is a floating point number appended with a unit such as "<code>14.5sp</code>".
+Available units are: px (pixels), dp (density-independent pixels), sp (scaled pixels based on preferred font size),
+in (inches), mm (millimeters).
+<p>This may also be a reference to a resource (in the form
+"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
+theme attribute (in the form
+"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
+containing a value of this type.
+          @attr name com.example.foolframeworksample:innerWindowWidth
+        */
+        public static final int FoolListView_innerWindowWidth = 4;
         /**
           <p>
           @attr description
@@ -676,11 +733,11 @@ containing a value of this type.
            @see #SlideToRefresh_strSubLefterTextAppearance
          */
         public static final int[] SlideToRefresh = {
-            0x7f01000b, 0x7f01000c, 0x7f01000d, 0x7f01000e,
-            0x7f01000f, 0x7f010010, 0x7f010011, 0x7f010012,
-            0x7f010013, 0x7f010014, 0x7f010015, 0x7f010016,
-            0x7f010017, 0x7f010018, 0x7f010019, 0x7f01001a,
-            0x7f01001b, 0x7f01001c, 0x7f01001d
+            0x7f01000d, 0x7f01000e, 0x7f01000f, 0x7f010010,
+            0x7f010011, 0x7f010012, 0x7f010013, 0x7f010014,
+            0x7f010015, 0x7f010016, 0x7f010017, 0x7f010018,
+            0x7f010019, 0x7f01001a, 0x7f01001b, 0x7f01001c,
+            0x7f01001d, 0x7f01001e, 0x7f01001f
         };
         /**
           <p>

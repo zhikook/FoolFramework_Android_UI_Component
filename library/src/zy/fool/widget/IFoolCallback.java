@@ -19,7 +19,7 @@ import android.view.View;
 
 public interface IFoolCallback {
 	
-	static interface OnPullListener{
+	 interface OnPullListener{
 		boolean onPull(FoolAdapterView<?> parent, View view, int position, long id);
 //     	public boolean onPullOut();
 //		public boolean onPullIn();

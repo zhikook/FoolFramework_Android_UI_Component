@@ -32,6 +32,7 @@ import zy.fool.widget.IFoolCallback.OnPullListener;
 import zy.fool.widget.IFoolCallback.OnSlideListener;
 import zy.fool.widget.IFoolCallback.OnSmoothPullFinishedListener;
 
+import android.R.integer;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -67,9 +68,7 @@ import android.view.ViewParent;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
-import android.widget.LinearLayout;
 import android.widget.ListAdapter;
-import android.widget.TextView;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
@@ -159,12 +158,13 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
     
     static final int LAYOUT_PULLING = 9; 
     
-
-	public static final int SMOOTH_PULL_DURATION_MS = 200;
+	static final int SMOOTH_PULL_DURATION_MS = 200;
 	
-	public static final int SMOOTH_PULL_LONG_DURATION_MS = 325;
+	static final int SMOOTH_PULL_LONG_DURATION_MS = 325;
 	
-	public final float FRICTION  = 2.0F;
+	static final int DEMO_PULL_INTERVAL = 225;
+	
+	final float FRICTION  = 2.5F;
 
     /**
      * How many positions in either direction we will search to try to
@@ -229,8 +229,12 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
     static final int TOUCH_MODE_OVERSLIDE = 6;
     
     static final int TOUCH_MODE_PULLING = 7;
-    
-    //static final int TOUCH_MODE_OVERPULLING = 8;
+   
+    /**
+     * mPullMode
+     */
+    static final int PULL_OUT = 1;
+    static final int PULL_IN = 2;
     
    /**
 	 * mSlideMode
@@ -343,17 +347,9 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 	
     /**
      *  The remote adapter containing the data to be displayed by this view to be set
-		
-		???�?�???????
-		
+			
 	    private BaseAdapter mRemoteAdapter;
-	 
-	    
-	    public void getRemoteViewsAdapter(){
-	    	RemoteViewsFactoryImpl mRemote = new RemoteViewsFactoryImpl();
-	    }
-	    
-     */
+	 */
 	
 	/**
      * Running count of how many items are currently checked
@@ -416,26 +412,8 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 	
 	private SavedState mPendingSync;
 
-	 
-    /**************************************************************
-     * 
-     *   �?              �?
-     *   �???????????????????????????????????????????�?
-     *   �?      A       �?
-     *   �???????????????????????????????????????????�?
-     *   �?              �? --> mPullPadeSpaceHeight
-     *   �???????????????????????????????????????????�?
-     *   �?      B       �? --> mPulledPosistion
-     *   �???????????????????????????????????????????�?
-     *   �?              �? --> mPullPadeSpaceHeight
-     *   �???????????????????????????????????????????�?
-     *   �?      C       �?
-     *   �???????????????????????????????????????????�?
-     *   �?              �?   
-     * 
-     * ************************************************************/
     /**
-     * ??��?��??�?�?�?�?�???��????? mAbovePulledView
+     *					 mAbovePulledView
      *                   mBelowPulledView
      *                   
      *                   mPulledTop
@@ -449,13 +427,25 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
     ArrayList<FixedViewInfo> mAboverPulledViewInfos = Lists.newArrayList();
     ArrayList<FixedViewInfo> mBelowerPulledViewInfos = Lists.newArrayList();
 
-    IPolicy mInnerPolicy;
+    IPolicy mInnerPolicy;    //InnerWindow Manager Interface
     
-	IInnerWin mInnerWindow;
+	IInnerWin mInnerWindow;  //InnerWindow Interface
 	
-	int mPullDeltaDistance;
+	int mLastPulledDelta = Integer.MIN_VALUE;
     
-    int mPulledTop;
+    int mRawPullDistance = 0;
+	
+	int mPullY = 0;
+	
+    //InnerWindow measure and Layout
+    int mInnerWindowWidth;
+    int mInnerWindowHeight;
+	
+	int mPullMode = -1;
+	
+	RectF tempPulledRectF ;
+	
+	int mPulledTop;
     
     int mPulledItemLeft;
     
@@ -567,8 +557,7 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
     boolean isSliding = false;
     
     boolean canPull = false;    	
-    
-	  
+    	  
     /**
      * When set to true, the list automatically discards the children's
      * bitmap cache after scrolling.
@@ -610,9 +599,6 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
      */
     private PerformItemSlide mPerformItemSlide;
     
-    
-    private SmoothPulledRunnable mCurrentSmoothPulledRunnable;
-	
     /**
      * Acts upon slide
      */
@@ -723,19 +709,6 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 
 		config = ViewConfiguration.get(getContext());		
 		
-		mTop = this.getTop();
-		mLeft = this.getLeft();
-		mRight = this.getRight();
-		mBottom = this.getBottom();
-
-		mPaddingLeft = this.getPaddingLeft();
-		mPaddingRight = this.getPaddingRight();
-		mPaddingTop = this.getPaddingTop();
-		mPaddingBottom = this.getPaddingBottom();
-
-		mScrollX = this.getScrollX();
-		mScrollY = this.getScrollY();		    
-
 		mTouchSlop = config.getScaledTouchSlop();
 		mMinimumVelocity = config.getScaledMinimumFlingVelocity();
         mMaximumVelocity = config.getScaledMaximumFlingVelocity();
@@ -752,7 +725,6 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 	}
 
 	/**
-	 * 设置为�?��?��?�示模�??
 	 * @param can
 	 */
 	public void setSpotCan(boolean can){
@@ -764,7 +736,6 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 	}
 	
 	/**
-	 * 设置为�?��????�示模�??
 	 * @param can
 	 */
 	public void setPullCan(boolean can){
@@ -889,8 +860,7 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
         }
     }
 	
-	//???�?	
-    @Override
+	@Override
     protected void handleDataChanged() {
     	
         int count = mItemCount;
@@ -1202,6 +1172,7 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
         if (mCheckStates != null) {
             ss.checkState = mCheckStates.clone();
         }
+
         if (mCheckedIdStates != null) {
             final LongSparseArray<Integer> idState = new LongSparseArray<Integer>();
             final int count = mCheckedIdStates.size();
@@ -1297,8 +1268,6 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
             mDataChanged = true;
             mOldItemCount = mItemCount;
             mItemCount = mAdapter.getCount();
-            
-            System.out.println("onAttachedToWindow" + mItemCount);
         }
 
         mIsAttached = true;
@@ -1446,8 +1415,6 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 
         mResurrectToPosition = INVALID_POSITION;
         
-        //?????????�?�????Pull�?�?
-
         mTouchMode = TOUCH_MODE_REST;
         clearPullingCache();
         mSpecificTop = selectedTop;
@@ -1457,15 +1424,11 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
             updateSelectorState();
             setSelectionInt(selectedPos);
             //invokeOnItemScrollListener();
-            //??????移�?��?��????????�?�????�???????�?
-            //==========================================================
-              
+             
         } else {
             selectedPos = INVALID_POSITION;
         }
         //reportScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
-        //??��????��?????�?件�?��??
-        //==========================================================
         
         return selectedPos >= 0;
     }
@@ -1522,6 +1485,20 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
+        
+        mTop = this.getTop();
+		mLeft = this.getLeft();
+		mRight = this.getRight();
+		mBottom = this.getBottom();
+
+		mPaddingLeft = this.getPaddingLeft();
+		mPaddingRight = this.getPaddingRight();
+		mPaddingTop = this.getPaddingTop();
+		mPaddingBottom = this.getPaddingBottom();
+
+		mScrollX = this.getScrollX();
+		mScrollY = this.getScrollY();
+		
         mInLayout = true;
 
         if (changed) {
@@ -1552,105 +1529,91 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
     }
 
 	protected void layoutChildren() {
-		// TODO Auto-generated method stub
+
 	}
 	
-	
 	private boolean startSmoothPullIfNeeded(RectF tempRectF){
-		boolean ispull = false;
-		if(isPulledMotion(mStartPullRectF,tempRectF,mTouch1DownTime)){
-			
-				final Handler handler = getHandler();
+        final int deltaY = (int) (y - mMotionY);
+        boolean ispull = false;
 
-				// Handler should not be null unless the FoolAbsView is not attached to a
-				// window, which would make it very hard to scroll it... but the monkeys
-				// say it's possible.
-		        if (handler != null) {	
-		        	handler.removeCallbacks(mPendingCheckForLongPress);
-			    }
+		if(isPulledMotion(mStartPullRectF,tempRectF,mTouch1DownTime)){
+			final Handler handler = getHandler();
+
+			// Handler should not be null unless the FoolAbsView is not attached to a
+			// window, which would make it very hard to scroll it... but the monkeys
+			// say it's possible.
+	        if (handler != null) {
+	        	handler.removeCallbacks(mPendingCheckForLongPress);
+			}
 			
-		        setPressed(false);
-			    View motionView = getChildAt(mPulledPosistion - mFirstPosition);
-			    if (motionView != null) {
-			        motionView.setPressed(false);
-			    }
-			 
-			    // Time to start stealing events! Once we've stolen them, don't let anyone
-	            // steal from us
-	            final ViewParent parent = getParent();
-	            if (parent != null) {
-	                parent.requestDisallowInterceptTouchEvent(true);
-	            }		   	
-		        mTouchMode  = TOUCH_MODE_PULL;
-		        if(mPulledPosistion>0){
-		        	setPullTo(Math.abs(mMotionY-mInitY));			        
-		        }
-		        ispull = true;
+		    setPressed(false);
+		    View motionView = getChildAt(mPulledPosistion - mFirstPosition);
+		    if (motionView != null) {
+		        motionView.setPressed(false);
+			}			 
+		    // Time to start stealing events! Once we've stolen them, don't let anyone
+	        // steal from us
+		    final ViewParent parent = getParent();
+            if (parent != null) {
+	            parent.requestDisallowInterceptTouchEvent(true);
+	        }		   	
+	        mTouchMode  = TOUCH_MODE_PULL;
+	        mMotionCorrection = deltaY > 0 ? mTouchSlop : -mTouchSlop;
+		    
+	        //这种控制方式前提是move的不能提前break;
+	        
+		    if(mPulledPosistion>0){        	
+		   
+		       //setPullTo(Math.abs(mMotionY-mInitY));			        
+		    }
+		    //smoothPullIfNeeded((int) y);
+		    ispull = true;
 		}else{
-            mTouchMode  = TOUCH_MODE_REST;
+            mTouchMode  = TOUCH_MODE_DONE_WAITING;
             ispull = false;
         }
 		return ispull;
 	}
 	
-	private final void smoothPullToAndBack(int deltaY) {
-		//mTouchMode = TOUCH_MODE_OVERPULLING
-		final int delY = deltaY;
-		smoothPull(delY, SMOOTH_PULL_DURATION_MS,0, new OnSmoothPullFinishedListener() {
-			@Override
-			public void onSmoothPullFinished() {
-				//smoothPull(-delY,SMOOTH_PULL_DURATION_MS,DEMO_PULL_INTERVAL);
-			}
-		});
-	}
-	
-	static final int DEMO_PULL_INTERVAL = 225;
-	
-	private void smoothPull(int deltaY,long duration,long delayMillis){
-		smoothPull(deltaY,duration,delayMillis,null);
-	}
+	void smoothPullIfNeeded(int y){
 		
-	/**
-	 *  ?????? 平�????��????��?��??�?�?并�?��??线�??�???? @setPullTo(...)??��??
-	 * @param deltaY
-	 */
-	private void smoothPull(int deltaY,long duration,long delayMillis,OnSmoothPullFinishedListener listener){
-		if (null != mCurrentSmoothPulledRunnable) {
-			mCurrentSmoothPulledRunnable.stop();
+		final int rawPullDelta =Math.abs(y-mMotionY);
+		final int pullDelta = rawPullDelta -mMotionCorrection;
+		final int pullDistance = Math.abs(y-mInitY);
+		
+		boolean pullingTag = pullDistance<mInnerWindowHeight/FRICTION?true:false;
+		System.out.println("smoothPullIfNeeded rawPullDelta" + rawPullDelta);
+		System.out.println("smoothPullIfNeeded pullDelta" + pullDelta);
+		System.out.println("smoothPullIfNeeded pullDistance" + pullDistance);
+		System.out.println("smoothPullIfNeeded mInnerWindowHeight" + mInnerWindowHeight);
+		
+		int incremetalPullDelta = mLastY != Integer.MIN_VALUE?Math.abs(y-mLastY):pullDelta;
+		
+		if(pullingTag){
+			pullTo(incremetalPullDelta);
+		}else {
+			mTouchMode = TOUCH_MODE_OVERPULL;
+			System.out.println("smoothPullIfNeeded PullDistnace is max");
 		}
 		
-		if(mScrollY!= deltaY){
-			if (null == mScrollAnimationInterpolator) {
-				// Default interpolator is a Decelerate Interpolator ??�尼???�???????
-				mScrollAnimationInterpolator = new DecelerateInterpolator();
-			}
-			
-			if(null== mCurrentSmoothPulledRunnable)
-			mCurrentSmoothPulledRunnable =  new SmoothPulledRunnable(listener,duration);
-			mCurrentSmoothPulledRunnable.setPulled(mScrollY, deltaY);
-			
-			if (delayMillis > 0) {
-				postDelayed(mCurrentSmoothPulledRunnable, delayMillis);
-			} else {
-				post(mCurrentSmoothPulledRunnable);
-			}
-		}
+		mLastY = y;
 	}
-
+		
+	protected boolean smoothBackTo(int backDelta) {
+		System.out.println("super smoothBackTo");
+		return false;
+	}
+	
 	/**
-	 * setPullTo??��?????subClass �????,�???��????��??? 
 	 * 
-	 * ???述�??以�??�???��??�????离�????????�???��?��?????�???��??
-	 * 
-	 * @param deltaY pulledPosition-1 ??? pulledPosition+1 ???离�??
-	 * @param selectedPosition �??????��????????
-	 * @param duration ??��?��?��???????��??
+	 * @param deltaY pulledPosition-1 pulledPosition+1 
+	 * @param selectedPosition 
+	 * @param duration 
 	 * @param delayMillis postdelay time
 	 * 
 	 */
-	protected boolean setPullTo(int deltaY){
+	protected boolean pullTo(int deltaY){
 		createPullingCache();
-		//??��??类补???�????
 		return false;
 	}
 	
@@ -1685,7 +1648,7 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
         	mSelectorPosition = position;
 	    }
 	 
-        final Rect selectorRect = mSelectorRect; //�????�?Child View ?????��??
+        final Rect selectorRect = mSelectorRect; 
         
 	    selectorRect.set(sel.getLeft(), sel.getTop(), sel.getRight(), sel.getBottom());
         if (sel instanceof SelectionBoundsAdjuster) {
@@ -1785,7 +1748,7 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 	            mSelector.setState(getDrawableState());
 	        } else {
                 mSelector.setState(StateSet.NOTHING);
-                }
+            }
 	    }
 	}
 
@@ -1867,8 +1830,7 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 	    			mActivePointerId = event.getPointerId(0);
 	    			
 	    			if (!mDataChanged) {
-	    		    	//
-	    		        if ((mTouchMode != TOUCH_MODE_PULL) && (motionPosition >= 0) && (getAdapter().isEnabled(motionPosition))) {
+	    		    	if ((mTouchMode != TOUCH_MODE_PULLING) && (motionPosition >= 0) && (getAdapter().isEnabled(motionPosition))) {
 	    		           // User clicked on an actual view (and was not stopping a fling).
 	    		           // It might be a click or a scroll. Assume it is a click until
 	                       // proven otherwise
@@ -1890,8 +1852,8 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 	    		        mMotionViewOriginalTop = view.getTop();
 	    	        }
 	    		    
-	    		    mMotionX = (int)x;//�?�?已�?��?��??X???	    		    
-	    	        mMotionY = (int)y;//�?�?已�?��?��??Y???    	        
+	    		    mMotionX = (int)x;	    		    
+	    	        mMotionY = (int)y;    	        
 	    		    mMotionPosition = motionPosition;
 	                mLastX = Integer.MIN_VALUE;                
 	                mLastY = Integer.MIN_VALUE;	                               
@@ -1900,83 +1862,77 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
     		
     		mTouchMode = TOUCH_MODE_DOWN;
     		break;    		
-    		//??��?��????��??�?添�??    		
     	}
 
     	case MotionEvent.ACTION_MOVE:{
-
-			
+    		
     		if (mDataChanged) {
     			// Re-sync everything if data has been changed
     			// since the scroll operation can query the adapter.
                 layoutChildren();
             }
-    	
-	    	if(mTouchMode!=TOUCH_MODE_PULL||mTouchMode!=TOUCH_MODE_SLIDE||mTouchMode!=TOUCH_MODE_TAP||mTouchMode!=TOUCH_MODE_TAP){
-	    		mTouchMode = TOUCH_MODE_DONE_WAITING;		    	
+
+	    	receiveMotionEvent(event);
+	    	
+	    	if(event.getPointerCount()>1){
+	    		//BUG
+	    		tempPulledRectF = getRectF(event.getX(mSecondActiveId-1),event.getY(mSecondActiveId-1), event.getX(mSecondActiveId), event.getY(mSecondActiveId));
 	    	}
 	    	
-	    	receiveMotionEvent(event);
-			
     		switch (mTouchMode) {
     			case TOUCH_MODE_DOWN:
     			case TOUCH_MODE_TAP:
-    			case TOUCH_MODE_DONE_WAITING:
-    				
+    			case TOUCH_MODE_DONE_WAITING:{
     				if(!mDataChanged&&action!=MotionEvent.ACTION_CANCEL&&action!=MotionEvent.ACTION_UP){
-    					//=========================================================================================
-    					
-    					if(canPull&&event.getPointerCount()>1){
-    						
-        					//--------------------------------�?�?�?mSecondActiveId??��??�?�?�?�????�?------------------------------------//
-    						
-        					if(startSmoothPullIfNeeded(getRectF(event.getX(mSecondActiveId-1),event.getY(mSecondActiveId-1), event.getX(mSecondActiveId), event.getY(mSecondActiveId)))){
-        						
-        						if(mAboverPulledViewInfos.isEmpty()&&mBelowerPulledViewInfos.isEmpty()&&mPulledPosistion<0){
-        							mPulledPosistion = pointToPosition(mInitX, mInitY);
-        							
-//        							if(mInnerWindow!=null){
-        								prepareInnerWindow();
-//        								break;
-//        							}else {
-										break;
-//									}
-        						}
-        						System.out.println("--->   mTouchMode" + mTouchMode);
-        						break;
-        					}			
-        				}
+    					boolean handlePulled = false;
+        				
+    					if(canPull&&tempPulledRectF!=null){
+    						handlePulled = startSmoothPullIfNeeded(tempPulledRectF);
+    					}
        				
         				//check if we have moved far enough that it looks more like a scroll than a tap item scroll
-        				if(startScrollItemIfNeeded((int)x,(int)y))
-        				{
-        					//System.out.println("GO TO SLIDE");
-        					break;
+        				if(!handlePulled&&mLayoutMode!=LAYOUT_PULLING){
+        					startScrollItemIfNeeded((int)x,(int)y);
         				}
-    				}
-    				//??��??�??????��????????�?pull				
-    				break;
+        			}
+        			break;
+    			}
     			case TOUCH_MODE_PULL:
-    				System.out.println("TOUCH_MODE_PULL " + y);
+    				switch (mPullMode) {
+					case PULL_OUT:
+						if(mAboverPulledViewInfos.isEmpty()&&mBelowerPulledViewInfos.isEmpty()&&mPulledPosistion<0){
+							mPulledPosistion = pointToPosition(mInitX, mInitY);
+							prepareInnerWindow();
+						}else {
+							mTouchMode = TOUCH_MODE_PULLING;
+						}
+					break;
+					case PULL_IN:
+						mTouchMode = TOUCH_MODE_OVERPULL;
+					break;
+					}
     				
-    				int deltaY = Math.abs((int)y- mInitY);
-    	    		setPullTo(deltaY);
-    				break;
+    			break;
+    			case TOUCH_MODE_PULLING:
+    				smoothPullIfNeeded((int)y);
+    	    	break;
     			case TOUCH_MODE_OVERPULL:
-    				//do nothing
-    	    		break;
+    				break;
     			case TOUCH_MODE_SLIDE:
     			case TOUCH_MODE_OVERSLIDE:
-    				System.out.println("TOUCH_MODE_OVERSLIDE");
-    				scrollItemIfNeed(mMotionX);
-    				break;
+    				scrollItemIfNeed((int)x);
+    			break;
     		}
-    	break;
     	}
-
-    	case MotionEvent.ACTION_UP:{
-    		//�????�???��?��??�?�?�???��??�?�?�???��???????��??并�??�????PullMotion
+    	break;
+    	case MotionEvent.ACTION_UP:
+    	{
     		/*test*/  	
+    		System.out.println("ACTION_UP");
+    		System.out.println("mTouchMode " +mTouchMode);
+    		System.out.println("mLayoutMode " +mLayoutMode);
+    		System.out.println("mPullMode " +mPullMode);
+    		
     		switch (mTouchMode) {
     		
 	    		case TOUCH_MODE_DOWN:
@@ -2028,8 +1984,7 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 	    			            	   	removeCallbacks(mTouchModeReset);
 	    			               }
 
-		    			           //�????endAlpha
-		    			       	   if(mPendingCheckForLongPress!=null){
+		    			           if(mPendingCheckForLongPress!=null){
 		    			       			mPendingCheckForLongPress.setAlphaRunnableState(STATE_ALPHA_EXIT);
 		    			       	   }
 	    			       		
@@ -2057,21 +2012,38 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 	    			        	performClick.run();
 	    			        }
 	    			}
-
 	    			mTouchMode = TOUCH_MODE_REST;
 	                updateSelectorState();
 					break;
-					
 	  			case TOUCH_MODE_PULL:
-	  			//===========================================
-	  			
-                    break;
-                    
-	  			case TOUCH_MODE_OVERPULL:{
-	  				if(mCurrentSmoothPulledRunnable!=null){
-	  					mCurrentSmoothPulledRunnable.stop();
+	  			case TOUCH_MODE_PULLING:
+	  			case TOUCH_MODE_OVERPULL:
+	  			{
+	  				int rebackPullDistance = mRawPullDistance -(mInnerWindowHeight-mPulledItemHeight)/2;
+	  				if(mRawPullDistance>0){
+	  					//大于，则返回
+	  					smoothBackTo(mRawPullDistance);
 	  				}
-	  				removeCallbacks(mCurrentSmoothPulledRunnable);
+//	  				if(mRawPullDistance<0){
+//	  					//小于，不够，则直至
+//	  					smoothPullBackIfNeed(rebackPullDistance,SMOOTH_PULL_DURATION_MS,0,null);
+//	  				}
+	  				
+//	  				if(mCurrentSmoothPulledRunnable!=null){
+//	  					mCurrentSmoothPulledRunnable.stop();
+//	  				}
+//	  				removeCallbacks(mCurrentSmoothPulledRunnable);
+//	  				
+//	  				if(mInnerWindow!=null){
+//						clearInnerWindow();
+//						tempPulledRectF = null;
+//						mPullMode = -1;
+//						mLayoutMode = LAYOUT_SET_SELECTION;
+//						requestLayout();
+//					}
+//	  				
+//	  				mTouchMode = TOUCH_MODE_REST;
+	  				
 	  				break;
                 }
 	  			
@@ -2097,7 +2069,7 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 				                  removeCallbacks(mPerformItemSlide);
 			                  }
 			            };
-			            postDelayed(mTouchModeReset,SLIDING_TIME);//�???��?��?��??�????
+			            postDelayed(mTouchModeReset,SLIDING_TIME);
 	  				}
 	  				break;
 	  			 }
@@ -2141,9 +2113,7 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
     		break; 
     	}
     	case MotionEvent.ACTION_POINTER_UP:{
-    		System.out.println("Motion Event: ACTION_POINTER_UP");
     		
-    		//�????�???��?��??�?�?�???��??�?�?�???��???????��??并�??�????PullMotion    		
     		onSecondaryPointerUp(event);	
             final int x = mMotionX;
             final int y = mMotionY;
@@ -2169,7 +2139,6 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
     		mSecondActiveId = event.getPointerId(index)>0?1:event.getPointerId(index);
     						
 			if(mSecondActiveId>0&&!canPull){
-				//�???????�?�?
 				canPull = true;
 				mStartPullRectF = getRectF(event.getX(mSecondActiveId-1),event.getY(mSecondActiveId-1), event.getX(mSecondActiveId), event.getY(mSecondActiveId));		
 			}
@@ -2197,7 +2166,6 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
     	}
 
     	case MotionEvent.ACTION_CANCEL: {
-    		System.out.println("Motion Event: ACTION_CANCEL");
     		switch (mTouchMode) {	    			
 	    		default:
 	    			mTouchMode = TOUCH_MODE_REST;		
@@ -2206,7 +2174,7 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 	    		    if (motionView != null) {
 	    		    	motionView.setPressed(false);
 	    		    }
-	    		    clearPullingCache();//=========
+	    		    clearPullingCache();
 	    		    
 	    		    final Handler handler = getHandler();
 	    		    if (handler != null) {
@@ -2233,7 +2201,6 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
     }
     
     /**
-     * ???建�??�?两�?��????��????�形??��?????
      * @param x1
      * @param y1
      * @param x2
@@ -2251,31 +2218,30 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 		long now = System.currentTimeMillis();
    		
    		if(now>ViewConfiguration.getTapTimeout()+startMotionTime&&now>ViewConfiguration.getJumpTapTimeout()+startMotionTime){  			
-   			System.out.println("isPulledMotion");
+   			//System.out.println("isPulledMotion");
    			// the specified rectangle r is inside or equal to this rectangle.
-
-   			
    			if(r.bottom>r0.bottom&&r.top<r0.top){
    				ispull = true;
+   				mPullMode = PULL_OUT;
    			}else if(r.bottom<r0.bottom&&r.top>r0.top){
    				ispull = true;
+   				mPullMode = PULL_IN;
    			}
    		}else {
-   			System.out.println("NO PulledMotion"); 			
+   			//System.out.println("NO PulledMotion"); 			
 		}
    		
 		return ispull;
 	}
 	/**
-	 * ??��????????�?�?水平�????
-     * @return boolean
+	 * @return boolean
      */
     private boolean startScrollItemIfNeeded(int x,int y){
 	
     	mScrollX = getScrollX();
     	
 		final int deltaX = x -mMotionX;
-		final int deltaY = y -mMotionY;//
+		final int deltaY = y -mMotionY; //
 		final int distanceX = Math.abs(deltaX);
 		final int distanceY = Math.abs(deltaY);
 		final boolean overscroll = mScrollX!=0;
@@ -2295,13 +2261,12 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 			scrollItemIfNeed(x);
 			return true;
 		}else{
-			mTouchMode = TOUCH_MODE_REST;
+			mTouchMode = TOUCH_MODE_DONE_WAITING;
 			return false;
 		}
 	} 
 
     /**
-     * ??��??水平移�?��?????
      * @return int
      */
     protected int getIncrementalDeltaX(){
@@ -2309,7 +2274,6 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
     }
 
     /**
-     * 设置水平移�?��?????
      * @param x
      */
     protected void setIncrementalDeltaX(int x){
@@ -2322,10 +2286,6 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
      */
 	private void scrollItemIfNeed(int x){
 		
-		/*
-		 * �????移�?��?��??rawDeltaX
-		 * �??????��??ACTION_MOVE?????��?????x??? �? 该�?��?��??????????��?????ACTION_DOWN?????��?????mMotionX�?�????
-		 * */
 		final int rawDeltaX = x - mMotionX;//
 		final int deltaX3 = rawDeltaX - mMotionCorrection;
 		int incrementalDeltaX = mLastX!=Integer.MIN_VALUE?x - mLastX:deltaX3;
@@ -2386,7 +2346,6 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 	}
 	
 	/**
-	 * ???建�?��????��??�???��??�? 
 	 */
 	private void createPullingCache() {
 	    if (mPullingCacheEnabled && !mCachingStarted && !isHardwareAccelerated()) {
@@ -2397,7 +2356,6 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 	}
 	
     /**
-     * ?????��??�??????��??�?�?�???��?��??�????view???�????
      */
     private void clearPullingCache() {
         if (!isHardwareAccelerated()) {
@@ -2460,7 +2418,7 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
          case MotionEvent.ACTION_DOWN: {
              int touchMode = mTouchMode;
              if (touchMode == TOUCH_MODE_PULL) {
-            	// if (touchMode == TOUCH_MODE_PULL || touchMode == TOUCH_MODE_OVERPULLING) {
+            	 // if (touchMode == TOUCH_MODE_PULL || touchMode == TOUCH_MODE_OVERPULLING) {
                  mMotionCorrection = 0;
                  return true;
              }
@@ -2472,7 +2430,7 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
              int motionPosition = findMotionRow(y);
              //if (touchMode != TOUCH_MODE_OVERPULLING && motionPosition >= 0) {
              if ( motionPosition >= 0) {
-                         // User clicked on an actual view (and was not stopping a fling).
+                 // User clicked on an actual view (and was not stopping a fling).
                  // Remember where the motion event started
                  v = getChildAt(motionPosition - mFirstPosition);
                  mMotionViewOriginalTop = v.getTop();
@@ -2485,7 +2443,7 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
              mLastY = Integer.MIN_VALUE;
              initOrResetVelocityTracker();
              mVelocityTracker.addMovement(ev);
-             if (touchMode == TOUCH_MODE_PULL) {
+             if (touchMode == TOUCH_MODE_PULL||touchMode == TOUCH_MODE_PULLING) {
                  return true;
              }
              break;
@@ -2504,9 +2462,7 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
                  mVelocityTracker.addMovement(ev);
                  
                  //=================================================================================
-                 //添�??x--y
-                 
-                 
+                
                  break;
              }
              break;
@@ -2534,7 +2490,6 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
          return false;
     }
     private void onSecondaryPointerUp(MotionEvent ev) {
-    	//?????��?��??mMotionX,mMotionY???
     	
         final int pointerIndex = (ev.getAction() & MotionEvent.ACTION_POINTER_INDEX_MASK) >> MotionEvent.ACTION_POINTER_INDEX_SHIFT;
         final int pointerId = ev.getPointerId(pointerIndex);
@@ -2552,7 +2507,7 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
         }
 
         System.out.println("onSecondaryPointerUp");
-        ////�????�???��?��??�?�?�???��??�?�?�???��???????��??并�??�????PullMotion
+        
     }
 
     /**
@@ -3044,6 +2999,7 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 	                    break;
 	                case STATE_ALPHA_EXIT:
 	                	mHandler.removeCallbacks(mItemAlphaRunnable);
+	                	//BUG
 	                	alphaView.setAlpha(mOriginalAlpha);
 	                	alphaView.invalidate();
 	                	
@@ -3253,8 +3209,6 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
      * @param position the position of the new selection
      */
     abstract void setSelectionInt(int position);
-
-    //�?�????
     
     private class PerformSpot implements Runnable{
     	int spotPosistion;
@@ -3285,13 +3239,11 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
     }
 	
     /**
-     * ??��??类继??��?????
      * @return
      */
     protected boolean spotingNext() {
     	return false;
     }
-    
     
     private class SpotSlide implements Runnable{
     	int mSpotSlidePosistion;
@@ -3409,7 +3361,6 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
     }
     
     /**
-     * 设置???????????��??View ALPHA??????�?�????
      * @param itemNeedAlpha
      */
     public void setIsPullItemViewAlpha(boolean itemNeedAlpha){
@@ -3424,7 +3375,6 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 	}
 	
     /**
-     * Slide�?�?
      * @author davidlau
      * 2014 2 27 03:08
      */
@@ -4013,22 +3963,6 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
         return 0;
     }
 
- 	
-    /**
-     * ??��????��????��??代�??�?�?没�??�????�?项�????��??请补???FoolViewFramework 0.488,
-     * 
-     * 
-     * Fills the gap left open by a touch-scroll. During a touch scroll, children that
-     * remain on screen are shifted and the other ones are discarded. The role of this
-     * method is to fill the gap thus created by performing a partial layout in the
-     * empty space.
-     *
-     * @param down true if the scroll is going down, false if it is going up
-     */
-    //abstract void fillGap(boolean down);
-
-    //???�??????��???????��??�?�??????��??�?pull??��??�???????�??????��??�?view???�???��??�???��??
-    //�????�???��?��??�???��????��??�????   
     void hideSelector() {
         if (mSelectedPosition != INVALID_POSITION) {
             if (mLayoutMode != LAYOUT_SPECIFIC) {
@@ -4105,107 +4039,38 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 	    mSlideListener = mListener;
     }	
 	
-	private Interpolator mScrollAnimationInterpolator;
-		
-	final class SmoothPulledRunnable implements Runnable {
-		
-		private final Interpolator mInterpolator;	
-			
-		private boolean mContinueRunning;
-		private long mStartTime = -1;
-		private int mFromY;
-		private int mToY;
-		private int mPullDeltaY;
-		private final long mDuration;
-		private int mCurrentY;
-		private boolean isPullOut = false;
-		
-		int pulldeltaDistance ;
-		
-		private  ListAdapter adapter;
-		private OnSmoothPullFinishedListener mListener;
-
-		private View views[];
-		
-		public SmoothPulledRunnable(OnSmoothPullFinishedListener listener,long duration) {	
-			mInterpolator = mScrollAnimationInterpolator;
-			mListener = listener;
-			
-			mDuration = duration;
-			adapter = mAdapter;
-			pulldeltaDistance = mPullDeltaDistance;
-		}
-
-		protected void setPulled(int fromY,int toY){
-			mFromY = fromY;
-			mToY = toY;
-		}
-
-		@Override
-		public void run() {
-			
-			/**
-			 * Only set mStartTime if this is the first time we're starting,
-			 * else actually calculate the Y delta
-			 */
-			if (mStartTime == -1) {
-				mStartTime = System.currentTimeMillis();
-			} else {
-				/**
-				 * We do do all calculations in long to reduce software float
-				 * calculations. We use 1000 as it gives us good accuracy and
-				 * small rounding errors
-				 */
-				
-				long normalizedTime = (1000 * (System.currentTimeMillis() - mStartTime)) / mDuration;				
-				normalizedTime = Math.max(Math.min(normalizedTime, 1000), 0);				
-				mPullDeltaY = mToY>pulldeltaDistance?pulldeltaDistance:mToY;			
-				
-				final int deltaY = Math.round((mPullDeltaY) * mInterpolator.getInterpolation(normalizedTime / 1000f));				
-				mCurrentY = mFromY - deltaY;	
-				mContinueRunning = deltaY!=0;
-				
-				if(!isPullOut){
-					setPullTo(mCurrentY);
-				}else{
-					setPullTo(-mCurrentY);	
-				}
-		    }
-
-			// If we're not at the target Y, keep going...
-			if (mContinueRunning) {
-				ViewCompat.postOnAnimation(AbsFoolView.this, this);
-			} 
-			else {
-				//补�??�???????止�?��??
-				if (null != mListener) {
-					mListener.onSmoothPullFinished();
-				}
-			}
-		}
-
-		public void stop() {
-			performSpotPull(AbsFoolView.this, mPulledPosistion,adapter.getItemId(mPulledPosistion));
-			isAllowedPull = false;
-			mContinueRunning = false;
-			removeCallbacks(this);
-		}
-	}	
+	
+	protected int getPullY() {
+		return mPullY;
+	}
+	
+	protected void setPullY(int pull_y) {
+		this.mPullY = pull_y;
+	}
 	
 	protected int getPullToRefreshScrollDuration() {
 		return SMOOTH_PULL_DURATION_MS;
 	}
 	
 	protected void prepareInnerWindow(){
-			
+		
 		if(mInnerPolicy.getInnerWindow()==null){
 			mInnerPolicy.makeNewInnerWindow();
 		}
 		mInnerWindow = mInnerPolicy.getInnerWindow();
 	}
 
-	protected void clearPulledView(){	
-		mLayoutMode = LAYOUT_PREVIEW;
-		requestLayout();
+	protected void clearInnerWindow(){	
+		System.out.println("clearInnerWindow ");
+		
+		if(mAboverPulledViewInfos.size()>0||mBelowerPulledViewInfos.size()>0){
+			mAboverPulledViewInfos.clear();
+			System.out.println("mAboverPulledViewInfos isemty" + mAboverPulledViewInfos.isEmpty());
+			mBelowerPulledViewInfos.clear();
+		}
+		mPulledPosistion = INVALID_POSITION;
+		
+		if(mInnerWindow!=null)
+			mInnerWindow = null;
 	}
 }

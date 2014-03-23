@@ -15,8 +15,9 @@
         
         android:id="@+id/foolview"
         android:background="#EEE999"
-        ffw:divider="@drawable/divider_horizontal_dark_opaque"
+        ffw:divider="@drawable/listview_divider_line"
         ffw:dividerHeight="1dp"
-        ffw:pulldeltaDistance = "30dp"
+        ffw:innerWindowHeight = "120dp"
+        ffw:innerWindowWidth = "300dp"
         />
 </RelativeLayout>

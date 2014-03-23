@@ -21,15 +21,22 @@ import zy.android.collect.Lists;
 import zy.android.widget.Checkable;
 import zy.android.widget.SpaceViewListAdapter;
 import zy.fool.R;
+import zy.fool.policy.IInnerWin;
+import zy.fool.widget.AbsFoolView.LayoutParams;
 import android.R.integer;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.database.DataSetObserver;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.AttributeSet;
@@ -51,13 +58,10 @@ public class FoolListView extends AbsFoolView {
 
     private boolean mIsCacheColorOpaque;
     private boolean mDividerIsOpaque;
-
-    private boolean mHeaderDividersEnabled;
-    private boolean mFooterDividersEnabled;
 	
     Drawable mDivider;
     int mDividerHeight = 0;//test
-
+    
     // used for temporary calculations.
     private final Rect mTempRect = new Rect();
     private Paint mDividerPaint;
@@ -94,6 +98,7 @@ public class FoolListView extends AbsFoolView {
 		final Drawable d = a.getDrawable(R.styleable.FoolListView_divider);
     	if (d != null) {
 		    // If a divider is specified use its intrinsic height for divider height
+    		System.out.println("divider "+ d.toString());
 	        setDivider(d);
 	    }
     	
@@ -102,15 +107,20 @@ public class FoolListView extends AbsFoolView {
 	        setDividerHeight(dividerHeight);
 	    }
 	    
-	    final int pulldeltaHeight = a.getDimensionPixelSize(R.styleable.FoolListView_pulldeltaDistance, 0);
-	    if (pulldeltaHeight != 0) {
-	        setPullDeltaDistance(pulldeltaHeight);
+	    final int innerHeight = a.getDimensionPixelSize(R.styleable.FoolListView_innerWindowHeight, 0);
+	    if (innerHeight != 0) {
+	        setInnerWindowHeight(innerHeight);
+	    }
+	    
+	    final int innerWidth = a.getDimensionPixelSize(R.styleable.FoolListView_innerWindowWidth, 0);
+	    if (innerHeight != 0) {
+	        setInnerWindowWidth(innerWidth);
 	    }
 	    
 		a.recycle();
 	}
-	
-    /*
+    
+	/*
      * (non-Javadoc)
      *
      * Children specified in XML are assumed to be header views. After we have
@@ -182,30 +192,23 @@ public class FoolListView extends AbsFoolView {
     
     @Override
     protected void dispatchDraw(Canvas canvas) {
+    	
     	if (mCachingStarted) {
             mCachingActive = true;
         }
 
     	//Draw the dividers
     	final int dividerHeight = mDividerHeight;
-    	final Drawable overscrollHeaderDrawable = mOverScrollHeader;
-    	final Drawable overscrollFooterDrawable = mOverScrollFooter;
-    	final boolean drawOverscrollHeader = overscrollHeaderDrawable!=null;
-    	final boolean drawOverscrollFooter = overscrollFooterDrawable!=null;
     	final boolean drawDividers = dividerHeight >0 && mDivider!=null;
     	
-    	if(drawDividers || drawOverscrollFooter||drawOverscrollHeader){
+    	if(drawDividers){
     		//only modify the top and bottom in the loop, we set the left and right there
     		final Rect bounds = mTempRect;
     		bounds.left = mPaddingLeft;
     		bounds.right = mRight -mLeft -mPaddingRight;
     		
     		final int count = getChildCount();
-    		final int headerCount = mHeaderViewInfos.size();
     		final int itemCount = mItemCount;
-    		final int footerLimit = itemCount - mFooterViewInfos.size() -1;
-    		final boolean headerDividers = mHeaderDividersEnabled;
-    		final boolean footerDividers = mFooterDividersEnabled;
     		final int first = mFirstPosition;
     		final boolean areAllItemsSelectable = mAreAllItemsSelectable;
     		final ListAdapter adapter = mAdapter;
@@ -215,7 +218,7 @@ public class FoolListView extends AbsFoolView {
     		//If the list is opaque and the background is also opaque, we don't
     		//need to draw anything since the background will do it for us.
     		final boolean fillForMissingDividers = isOpaque()&&!super.isOpaque();
-    		
+    	
     		if(fillForMissingDividers&&mDividerPaint == null&&mIsCacheColorOpaque){
     			mDividerPaint = new Paint();
     			mDividerPaint.setColor(getCacheColorHint());
@@ -230,72 +233,30 @@ public class FoolListView extends AbsFoolView {
     		}
     		
     		final int listBottom = mBottom - mTop -effectivePaddingBottom +mScrollY;
+    		
     		if(!mStackFromBottom){
     			int bottom = 0;
-    			
-    			//Draw top divider or header for overscroll
-    			final int scrollY = mScrollY;
-    			if(count > 0 && scrollY <0){
-    				if(drawOverscrollHeader){
-    					bounds.bottom = 0;
-    					bounds.top = scrollY;
-    					drawOverscrollHeader(canvas, overscrollHeaderDrawable, bounds);
-    				}else if(drawDividers) {
-						bounds.bottom = 0;
-						bounds.top = -dividerHeight;
-						drawDivider(canvas,bounds,-1);
-					}
-    			}
-    			
+	
     			for(int i = 0;i<count;i++){
-    				if((headerDividers||first+i>=headerCount)&&(footerDividers||first+i<footerLimit)){
-    					View childView = getChildAt(i);
-    					bottom = childView.getBottom();
-    				    //Dont draw dividers next to items that are not enabled
+    				View childView = getChildAt(i);
+    				bottom = childView.getBottom();
     					
-    					if (drawDividers&&(bottom<listBottom&&(drawOverscrollFooter&&i==count-1))) {
-    						
-							if((areAllItemsSelectable||(adapter.isEnabled(first+i)&&(i==count-1||adapter.isEnabled(first+i+i))))){
-								bounds.top = bottom;
-								bounds.bottom = bottom + dividerHeight;
-								drawDivider(canvas, bounds, i);
-							}else if(fillForMissingDividers){
-								bounds.top = bottom;
-								bounds.bottom = bottom + dividerHeight ;
-								canvas.drawRect(bounds, paint);
-							}
-						}
-    					
-
-    					
-    				}
-    			}
-    			
-    			final int overFooterBottom = mBottom + mScrollY;
-    			if(drawOverscrollFooter&&first + count == itemCount&&overFooterBottom>bottom){
     				bounds.top = bottom;
-    				bounds.bottom = overFooterBottom;
-    				drawOverscrollFooter(canvas, overscrollFooterDrawable, bounds);
-    			}
+					bounds.bottom = bottom + dividerHeight;
+					drawDivider(canvas, bounds, i);
+				}
+
     		}else {
 				int top;
-				
-				final int scrollY = mScrollY;
-				
-				if(count>0&&drawOverscrollHeader){
-					bounds.top = scrollY;
-					bounds.bottom = getChildAt(0).getTop();
-					drawOverscrollHeader(canvas, overscrollHeaderDrawable, bounds);
-				}
-				
-				final int start = drawOverscrollHeader?1:0;
-				for(int i = start;i<count;i++){
-					if((headerDividers||first+i>headerCount)&&(footerDividers||first+i<footerLimit)){
+	
+				for(int i = 0;i<count;i++){
 						View childView = getChildAt(i);
 						top = childView.getTop();
 						//Don't draw dividers next to items that are not enabled
 						if(top>effectivePaddingTop){
 							if(areAllItemsSelectable||(adapter.isEnabled(first+i)&&(i==count-1||adapter.isEnabled(first+i+1)))){
+								System.out.println("top>effectivePaddingTop");
+								
 								bounds.top = top - dividerHeight;
 								bounds.bottom = top;
 								
@@ -309,63 +270,16 @@ public class FoolListView extends AbsFoolView {
 								bounds.bottom = top;
 								canvas.drawRect(bounds, paint);
 							}
-						}
 					}
 				}
-			
-
-	            if (count > 0 && scrollY > 0) {
-	                if (drawOverscrollFooter) {
-	                    final int absListBottom = mBottom;
-	                    bounds.top = absListBottom;
-	                    bounds.bottom = absListBottom + scrollY;
-	                    drawOverscrollFooter(canvas, overscrollFooterDrawable, bounds);
-	                } else if (drawDividers) {
-	                    bounds.top = listBottom;
-	                    bounds.bottom = listBottom + dividerHeight;
-	                    drawDivider(canvas, bounds, -1);
-	                }
-	            }
     		}
     	}
         // Draw the indicators (these should be drawn above the dividers) and children
         super.dispatchDraw(canvas);
     }
-    
-    void drawOverscrollHeader(Canvas canvas,Drawable drawable,Rect bounds){
-    	final int height = drawable.getMinimumHeight();
-    	
-    	canvas.save();
-    	canvas.clipRect(bounds);
-    	
-    	final int span = bounds.bottom - bounds.top;
-    	if(span<height){
-    		bounds.top = bounds.bottom - height;
-    	}
-    	
-    	drawable.setBounds(bounds);
-    	drawable.draw(canvas);
-    	
-    	canvas.restore();
-    }
-    
-    void drawOverscrollFooter(Canvas canvas,Drawable drawable,Rect bounds){
-    	final int height = drawable.getMinimumHeight();
-    	
-    	canvas.save();
-    	canvas.clipRect(bounds);
-    	
-    	final int span = bounds.bottom - bounds.top;
-    	if(span <height){
-    		bounds.bottom = bounds.top + height;
-    	}
-    	
-    	drawable.setBounds(bounds);
-    	drawable.draw(canvas);
-    	
-    	canvas.restore();
-    }
 
+    
+    
     @Override
 	public boolean isOpaque() {
 		boolean retValue = (mCachingActive && mIsCacheColorOpaque && mDividerIsOpaque ) || super.isOpaque();
@@ -395,8 +309,7 @@ public class FoolListView extends AbsFoolView {
         boolean more = super.drawChild(canvas, child, drawingTime);
         if (mCachingActive && !child.isDrawingCacheEnabled()) {
             mCachingActive = false;
-        }
-        
+        }    
         return more;
     }
 
@@ -412,9 +325,8 @@ public class FoolListView extends AbsFoolView {
     void drawDivider(Canvas canvas, Rect bounds, int childIndex) {
         // This widget draws the same divider for all children
         final Drawable divider = mDivider;
-
         divider.setBounds(bounds);
-        divider.draw(canvas);
+        divider.draw(canvas); 
     }
 
     /**
@@ -433,6 +345,8 @@ public class FoolListView extends AbsFoolView {
      * @param divider The drawable to use.
      */
     public void setDivider(Drawable divider) {
+    	System.out.println("SetDivider");
+    	
         if (divider != null) {
             mDividerHeight = divider.getIntrinsicHeight();
         } else {
@@ -443,6 +357,7 @@ public class FoolListView extends AbsFoolView {
         requestLayout();
         invalidate();
     }
+    
 
     /**
      * @return Returns the height of the divider that will be drawn between each item in the list.
@@ -463,41 +378,7 @@ public class FoolListView extends AbsFoolView {
         invalidate();
     }
     
-    public void setPullDeltaDistance(int distance){
-    	mPullDeltaDistance = distance;
-    }
-    
-    public int getPullDeltaDistance(){
-    	return mPullDeltaDistance;
-    }
-
     /**
-     * Enables or disables the drawing of the divider for header views.
-     *
-     * @param headerDividersEnabled True to draw the headers, false otherwise.
-     *
-     * @see #setFooterDividersEnabled(boolean)
-     * addAbovePulledView(android.view.View)
-     */
-    public void setHeaderDividersEnabled(boolean headerDividersEnabled) {
-        mHeaderDividersEnabled = headerDividersEnabled;
-        invalidate();
-    }
-
-    /**
-     * Enables or disables the drawing of the divider for footer views.
-     *
-     * @param footerDividersEnabled True to draw the footers, false otherwise.
-     *
-     * @see #setHeaderDividersEnabled(boolean)
-     */
-    public void setFooterDividersEnabled(boolean footerDividersEnabled) {
-        mFooterDividersEnabled = footerDividersEnabled;
-        invalidate();
-    }
-    
-    /**
-     * ����Ŀ��ɺ�Ҫ�޸����ע��<br>
      * 
      * Add a fixed view to appear at the top of the list. If addAbovePulledView is
      * called more than once, the views will appear in the order they were
@@ -862,7 +743,6 @@ public class FoolListView extends AbsFoolView {
             }
         }
 
-        //����ǻ���Scrollbar����Ҫlayout
         //layoutChildren();
     }
     
@@ -1117,6 +997,8 @@ public class FoolListView extends AbsFoolView {
 	            case LAYOUT_FORCE_TOP:
 	            case LAYOUT_FORCE_BOTTOM:
 	            case LAYOUT_SYNC:
+	            case LAYOUT_PULLING:
+	            	break;
 	            case LAYOUT_SPOT:
 	            case LAYOUT_SLIDE:
 	                break;
@@ -1157,7 +1039,6 @@ public class FoolListView extends AbsFoolView {
 	                        + ") with Adapter(" + mAdapter.getClass() + ")]");
 	            }
 
-	            //ͬ��ʱ����Ҫ�� mNextSelectedPosition������һ��mselectedposition��ע��
 	            //setSelectedPositionInt(mNextSelectedPosition);
 
 	            // Pull all children into the RecycleBin.These views will be reused if possible
@@ -1166,8 +1047,7 @@ public class FoolListView extends AbsFoolView {
 
 	            // Don't put Abover or belower views into the Recycler. Those are
 	            // already cached in mAbovePulledViews;	            
-	            //����һ��Ԥ���õ�child View ���ص�recycleBin  
-	          
+	           
 	            if (dataChanged) {
 	                for (int i = 0; i < childCount; i++) {
 	                    recycleBin.addMeasuredAndUnusedView(getChildAt(i), firstPosition+i);
@@ -1190,7 +1070,6 @@ public class FoolListView extends AbsFoolView {
 		                break;
 		            case LAYOUT_PULLING:
 		            	//hideSelector();
-		            	//ִ�������߳�
 		            	
 		            	break;
 		            case LAYOUT_SPOT:
@@ -1249,7 +1128,6 @@ public class FoolListView extends AbsFoolView {
 	            if (mItemCount > 0) {
 	                checkSelectionChanged();
 	            }
-
 	            //invokeOnItemScrollListener();
 	        } finally {
 	            if (!blockLayoutRequests) {
@@ -1562,7 +1440,6 @@ public class FoolListView extends AbsFoolView {
         final ListAdapter adapter = mAdapter;
         if (adapter == null) 
             return mListPadding.top + mListPadding.bottom;
-
         
         // Include the padding of the list
         int returnedHeight = mListPadding.top + mListPadding.bottom;
@@ -2271,7 +2148,6 @@ public class FoolListView extends AbsFoolView {
 	
 	
 	/**
-	 * ����Ҫ��ʼ��PulledView
 	 * 2014.03.13
 	 */
 	@Override
@@ -2309,8 +2185,20 @@ public class FoolListView extends AbsFoolView {
 				if(i>pullPosition){
 					tempView = getChildAt(i);
 					addBelowerPulledView(tempView,tempView.getTop());
-				}
+				}		
 			}
+			
+			if(mInnerWindowWidth == 0){
+				mInnerWindowWidth = mPulledItemWidth;
+			}
+			
+			if(mInnerWindowHeight == 0){
+				mInnerWindowHeight = mPulledItemHeight + mDividerHeight;
+			}else{
+				mInnerWindowHeight = mInnerWindowHeight+ mDividerHeight;
+			}
+			
+			mTouchMode = TOUCH_MODE_PULLING;
 		}
 	}
 	
@@ -2319,14 +2207,8 @@ public class FoolListView extends AbsFoolView {
 	 * 2014.03.13
 	 */
 	@Override
-	protected void  clearPulledView() {
+	protected void  clearInnerWindow() {
 		
-		if(mAboverPulledViewInfos.size()>0&&mBelowerPulledViewInfos.size()>0){
-			mAboverPulledViewInfos.clear();
-			mBelowerPulledViewInfos.clear();
-		}
-		if(mInnerWindow!=null)
-			mInnerWindow = null;
 	}
 
 	/**
@@ -2334,19 +2216,19 @@ public class FoolListView extends AbsFoolView {
 	 * @return
 	 */
 	@Override
-	protected boolean setPullTo(int deltaY) {
+	protected boolean pullTo(int deltaY) {
 		/*test*/
 		mFirstPosition = 0;
 		
 		int rawDeltaY = Math.abs(deltaY);
-		int pulldeltaDistance = mPullDeltaDistance;
-		
+		System.out.println("pullTo" +rawDeltaY);
 		final RecycleBin recycleBin = mRecycler;
 		View tempView;
 		int oldTempViewTop;
 		int newTempViewTop;
-		int childWidth;
 		int childHeight;
+		int innerWinTop = 0;
+		int aboverAtBottomViewBottom = 0;
 		
 		FixedViewInfo tempFixedViewInfo;
 		
@@ -2357,18 +2239,24 @@ public class FoolListView extends AbsFoolView {
 			recycleBin.removeSkippedMeasuredAndUnused();
 			
 			if(aboverCount >0||belowerCount>0){
-				
 				for(int index = 0;index<aboverCount;index++){
 					tempFixedViewInfo = mAboverPulledViewInfos.get(index);
 					tempView = tempFixedViewInfo.view;
 					oldTempViewTop =(Integer) tempFixedViewInfo.data;
-					newTempViewTop = oldTempViewTop-rawDeltaY-pulldeltaDistance;
-					setupPulledView(tempView,true,newTempViewTop,mLeft,false);
+					newTempViewTop = oldTempViewTop-rawDeltaY;
+					tempFixedViewInfo.data = newTempViewTop;
+
+					setupPulledView(tempView,true,newTempViewTop,mPulledItemLeft,false);
+					
+					if(index == aboverCount-1){
+						aboverAtBottomViewBottom = newTempViewTop+ mPulledItemHeight + mDividerHeight;
+					}
 				}
 
-				//高度没有传入
 				if(mInnerWindow!=null){
-					setupInnerWindow((View)mInnerWindow,true,mPulledTop-pulldeltaDistance,mPulledItemLeft,false);	
+					//固定在InnerItemView中间位置。
+					innerWinTop = mPulledTop - (mInnerWindowHeight-mPulledItemHeight)/2;
+					setupInnerWindow(mInnerWindow,true,innerWinTop,mPulledItemLeft,false);	
 				}
 			    	
 				for(int index = 0;index<belowerCount;index++){
@@ -2376,8 +2264,10 @@ public class FoolListView extends AbsFoolView {
 					tempView = tempFixedViewInfo.view;
 					childHeight = tempView.getHeight();
 					oldTempViewTop =(Integer) tempFixedViewInfo.data;
-					newTempViewTop = oldTempViewTop +rawDeltaY+pulldeltaDistance;
-					setupPulledView(tempView,true,newTempViewTop,mLeft,false);
+					newTempViewTop = oldTempViewTop +rawDeltaY;
+					tempFixedViewInfo.data = newTempViewTop;
+					
+					setupPulledView(tempView,true,newTempViewTop,mPulledItemLeft,false);
 
 					if(index == belowerCount-1){
 						int adjustHeight = mBottom-(newTempViewTop + childHeight);
@@ -2385,7 +2275,65 @@ public class FoolListView extends AbsFoolView {
 						
 						if(Math.abs(adjustHeight)>0){
 							int adjustPosistion = mFirstPosition+ aboverCount+belowerCount+1;
-							tempView = makeAndAddView(adjustPosistion, newTempViewTop, true, mLeft, false);
+							tempView = makeAndAddView(adjustPosistion, newTempViewTop, true, mPulledItemLeft, false);
+						}
+					}
+				}			
+				mRawPullDistance = innerWinTop - aboverAtBottomViewBottom;
+				System.out.println("pullto " + mRawPullDistance) ;
+				//设置移动值 
+				setPullY(deltaY);
+			}					   	
+		   	invalidate();
+		}
+		return true;
+    }
+	
+	@Override
+	protected boolean smoothBackTo(int backDelta) {
+		System.out.println("smoothBackTo " + backDelta) ;
+		
+		View tempView;
+		int oldTempViewTop;
+		int newTempViewTop;
+		int childHeight;
+		
+		FixedViewInfo tempFixedViewInfo;
+		
+		if(!mDataChanged){
+			int aboverCount = mAboverPulledViewInfos.size();
+			int belowerCount = mBelowerPulledViewInfos.size();
+			//detachAllViewsFromParent();
+			//recycleBin.removeSkippedMeasuredAndUnused();
+			
+			if(aboverCount >0||belowerCount>0){
+				for(int index = 0;index<aboverCount;index++){
+					tempFixedViewInfo = mAboverPulledViewInfos.get(index);
+					tempView = tempFixedViewInfo.view;
+					oldTempViewTop =(Integer) tempFixedViewInfo.data;
+					newTempViewTop = oldTempViewTop+backDelta;
+					tempFixedViewInfo.data = newTempViewTop;
+					
+					setupPulledView(tempView,true,newTempViewTop,tempView.getLeft(),false);
+				}
+
+				for(int index = 0;index<belowerCount;index++){
+					tempFixedViewInfo = mBelowerPulledViewInfos.get(index);
+					tempView = tempFixedViewInfo.view;
+					childHeight = tempView.getHeight();
+					oldTempViewTop =(Integer) tempFixedViewInfo.data;
+					newTempViewTop = oldTempViewTop - backDelta;
+					tempFixedViewInfo.data = newTempViewTop;
+					
+					setupPulledView(tempView,true,newTempViewTop,tempView.getLeft(),false);
+
+					if(index == belowerCount-1){
+						int adjustHeight = mBottom-(tempView.getTop() + childHeight);
+						newTempViewTop = tempView.getTop() + childHeight + mDividerHeight;
+						
+						if(Math.abs(adjustHeight)>0){
+							int adjustPosistion = mFirstPosition+ aboverCount+belowerCount+1;
+							tempView = makeAndAddView(adjustPosistion, newTempViewTop, true, tempView.getLeft(), false);
 						}
 					}
 				}
@@ -2397,27 +2345,23 @@ public class FoolListView extends AbsFoolView {
     }
 
 	private void setupPulledView(View tempView,boolean flowDown, int y,int selLeft,boolean isTopOrBottom) {
-		String hString = flowDown?"ABOVER":"BELOW";
-		//System.out.println("setupPulledView --> " + tempView.toString() + " " + hString +" y: "+ y + " selLeft: " +selLeft);
-		
-        //final boolean needToMeasureAndLayout =  tempView.isLayoutRequested();
-
+		final boolean needToMeasureAndLayout =  tempView.isLayoutRequested();
         AbsFoolView.LayoutParams p = (AbsFoolView.LayoutParams) tempView.getLayoutParams();
         if (p == null) {
             p = (AbsFoolView.LayoutParams) generateDefaultLayoutParams();
         }
 
-        int childWidthSpec = getChildMeasureSpec(mWidthMeasureSpec,mListPadding.left + mListPadding.right, p.width);
-        int lpHeight = p.height;
-        int childHeightSpec;
-        if (lpHeight > 0) {
-        	childHeightSpec = MeasureSpec.makeMeasureSpec(lpHeight, MeasureSpec.EXACTLY);
-        } else {
-            childHeightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+        if(needToMeasureAndLayout){
+        	 int childWidthSpec = getChildMeasureSpec(mWidthMeasureSpec,mListPadding.left + mListPadding.right, p.width);
+             int lpHeight = p.height;
+             int childHeightSpec;
+             if (lpHeight > 0) {
+             	childHeightSpec = MeasureSpec.makeMeasureSpec(lpHeight, MeasureSpec.EXACTLY);
+             } else {
+                 childHeightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+             }
+             tempView.measure(childWidthSpec, childHeightSpec);
         }
-        
-        
-        tempView.measure(childWidthSpec, childHeightSpec);
 
         final int w = tempView.getMeasuredWidth();
         final int h = tempView.getMeasuredHeight();
@@ -2431,78 +2375,50 @@ public class FoolListView extends AbsFoolView {
         //attachViewToParent(tempView, flowDown ? -1 : 0, p);
 	}
 	
-	private void setupInnerWindow(View tempView,boolean flowDown, int y,int selLeft,boolean isTopOrBottom) {
+    public void setInnerWindowWidth(int innerWidth) {
+		this.mInnerWindowWidth = innerWidth;
+	}
+
+	public void setInnerWindowHeight(int innerHeight) {
+		this.mInnerWindowHeight = innerHeight;
+	} 
 	
-		//measure and layout
+	public int getInnerWindowWidth(){
+		return mInnerWindowWidth;
+	}
+	
+	public int getInnerWindowHeight(){
+		return mInnerWindowHeight;
+	}
+	
+	private void setupInnerWindow(IInnerWin tempWin,boolean flowDown, int y,int selLeft,boolean isTopOrBottom) {
+		LinearLayout.LayoutParams p= tempWin.getInnerLayoutParams();
+		if(p==null){
+			 p = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+					 LinearLayout.LayoutParams.WRAP_CONTENT, 0);
+		}
 		
-        AbsFoolView.LayoutParams p = (AbsFoolView.LayoutParams) tempView.getLayoutParams();
-        if (p == null) {
-            p = (AbsFoolView.LayoutParams) generateDefaultLayoutParams();
-        }       
-        int lpHeight = p.height;
+		int childWidthSize = mInnerWindowWidth;
+		int childHeightSize = mInnerWindowHeight;
+		int childWidthMeasureMode = MeasureSpec.EXACTLY;   
+        int childHeightMeasureMode = MeasureSpec.AT_MOST;
+        int childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(childWidthMeasureMode,childWidthSize);
+        int childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(childHeightMeasureMode,childHeightSize);
         
-        int widthMeasureSpec = tempView.getMeasuredWidth();
-        int heightMeasureSpec = tempView.getMeasuredHeight();
-        
-        System.out.println("--> setInnerWindow widthMeasureSpec " +widthMeasureSpec);
-        System.out.println("--> setInnerWindow heightMeasureSpec " +heightMeasureSpec);
-        
-        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
-        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
-        
-        System.out.println("--> setInnerWindow widthMode " +widthMode);
-        System.out.println("--> setInnerWindow heightMode " +heightMode);
-        System.out.println("--> setInnerWindow widthSize " +widthSize);
-        System.out.println("--> setInnerWindow heightSize " +heightSize);
-        
-        
-        int innerHeight = heightMeasureSpec;
-        int innerWidth = widthMeasureSpec;
-        int innerWindowWidthSpec;
-        int innerWindowHeightSpec;
-            
-        if(innerHeight>lpHeight){
-        	innerHeight = lpHeight + 2*mPullDeltaDistance;
-        }
-        
-        if(innerWidth>p.width){
-        	innerWidth = p.width;
-        	innerWindowWidthSpec = getChildMeasureSpec(mWidthMeasureSpec,mListPadding.left + mListPadding.right, p.width);
-        }else{
-        	innerWindowWidthSpec = MeasureSpec.makeMeasureSpec(innerWidth, MeasureSpec.EXACTLY);
-        }
+        View childView = (View)tempWin;
+		childView.measure(childWidthMeasureSpec, childHeightMeasureSpec);
 
-        //Inner Window 
-        
-        if (innerHeight > 0) {
-        	System.out.println("innerHeight > 0");
-        	innerWindowHeightSpec = MeasureSpec.makeMeasureSpec(180, MeasureSpec.EXACTLY);
-        } else {
-        	innerWindowHeightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
-        }
-        
-        tempView.measure(innerWindowWidthSpec, innerWindowHeightSpec);
-
-        final int w = widthSize;
-        final int h = 180;
+        final int w = childWidthSize;
+        final int h = childHeightSize;
         final int childTop = flowDown ? y : y - h;
         final int childRight = selLeft + w;
         final int childBottom = childTop + h;
         
-        System.out.println("--> setInnerWindow innerWidth " +innerWidth);
-        System.out.println("--> setInnerWindow innerHeight " +innerHeight);
-       
+        childView.layout(selLeft, childTop, childRight, childBottom);        
         
-        tempView.layout(selLeft, childTop, childRight, childBottom);        
-        
-        addViewInLayout(tempView, flowDown ? -1 : 0, p, true);
+        addViewInLayout(childView, flowDown ? -1 : 0, p, true);
         
         //attachViewToParent(tempView, flowDown ? -1 : 0, p);
 	}
 	
-	protected void AdjustInnerBelower() {
-		
-	}
 }

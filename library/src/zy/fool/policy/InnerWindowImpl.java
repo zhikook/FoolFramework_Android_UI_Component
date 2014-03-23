@@ -19,6 +19,7 @@ public class InnerWindowImpl extends InnerBaseWindow<ItemInnerView>{
 	ItemInnerView mItemInnerView;
 	
 	LayoutInflater mInnerInflater;
+	int w,h;
 	
 	static OnSlideToRefreshListener<ItemInnerView> mSlideListener = new OnSlideToRefreshListener<ItemInnerView>() {
 
@@ -47,23 +48,12 @@ public class InnerWindowImpl extends InnerBaseWindow<ItemInnerView>{
 	
 	void init(Context context, AttributeSet attrs){
 		mInnerInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		innerLinearLayout = (LinearLayout) mInnerInflater.inflate(R.layout.innerwindow_layout, null);
-		
+		innerLinearLayout = (LinearLayout) mInnerInflater.inflate(R.layout.innerwindow_layout, null);	
 		innerLayoutParams = (LinearLayout.LayoutParams) innerLinearLayout.getLayoutParams();
+		
 		innerMeasureSpecWidth = innerLinearLayout.getMeasuredWidth();
 		innerMeasureSpecHeight = innerLinearLayout.getMeasuredWidth();
-		
-		//mItemInnerView = (ItemInnerView)innerLinearLayout.findViewById(R.id.innerView);
-		
-		//mView.layout(10, 10, 20, 30);
-	}
-	
-//	@Override
-//	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-//		measure(innerMeasureSpecWidth, innerMeasureSpecHeight);
-//	}
-//	
-	
+	}	
 	
 	@Override
 	public LinearLayout.LayoutParams getInnerLayoutParams(){

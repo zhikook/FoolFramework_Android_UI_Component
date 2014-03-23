@@ -730,7 +730,6 @@ public  abstract class InnerBaseWindow<T extends View> extends LinearLayout impl
 		int getIntValue() {
 			return mIntValue;
 		}
-
 	}
 	
 	
@@ -935,7 +934,6 @@ public  abstract class InnerBaseWindow<T extends View> extends LinearLayout impl
 
 		switch (event.getAction()) {
 			case MotionEvent.ACTION_MOVE: {
-				System.out.println("onTouchEvent ACTION_MOVE " +mIsBeingDragged);
 				if (mIsBeingDragged) {
 					mLastMotionY = event.getY();
 					mLastMotionX = event.getX();
@@ -1004,9 +1002,6 @@ public  abstract class InnerBaseWindow<T extends View> extends LinearLayout impl
 
 		switch (action) {
 			case MotionEvent.ACTION_MOVE: {
-				
-				System.out.println("onInterceptTouchEvent ACTION_MOVE");
-				
 				// If we're refreshing, and the flag is set. Eat all MOVE events
 				if (!mScrollingWhileRefreshingEnabled && isRefreshing()) {
 					return true;
@@ -1018,7 +1013,6 @@ public  abstract class InnerBaseWindow<T extends View> extends LinearLayout impl
 
 					// We need to use the correct values, based on scroll
 					// direction
-					//∫·œÚ
 					diff = x - mLastMotionX;
 					oppositeDiff = y - mLastMotionY;
 							

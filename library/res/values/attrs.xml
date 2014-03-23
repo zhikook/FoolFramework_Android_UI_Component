@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-     <attr name="FoolListView" format="reference" />
+    <attr name="FoolListView" format="reference" />
     
     <declare-styleable name="FoolListView">
-         <attr name="FoolListView" />
+        <attr name="FoolListView" />
         <!-- Reference to an array resource that will populate the ListView.  For static content,
              this is simpler than populating the ListView programmatically. -->
         <!-- Drawable or color to draw between list items. -->
@@ -14,6 +14,11 @@
         <!-- When set to false, the ListView will not draw the divider after each header view.
              The default value is true. -->   
         <attr name="pulldeltaDistance" format="dimension" />
+
+        <attr name="innerWindowWidth" format ="dimension"/>
+        
+        <attr name="innerWindowHeight" format ="dimension"/>
+        
     </declare-styleable>
   <eat-comment />
 
@@ -71,7 +76,6 @@
             <flag name="slideFromRight" value="0x2" />
             <flag name="both" value="0x3" />
             <flag name="manualOnly" value="0x4" />
-
         </attr>
 
         <!-- Whether the Indicator overlay(s) should be used -->

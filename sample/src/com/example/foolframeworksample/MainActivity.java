@@ -5,6 +5,7 @@ import zy.fool.widget.FoolListView;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
+import android.graphics.drawable.Drawable;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
