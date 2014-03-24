@@ -2203,12 +2203,11 @@ public class FoolListView extends AbsFoolView {
 	}
 	
 	/**
-	 * ���PulledViews
 	 * 2014.03.13
 	 */
 	@Override
-	protected void  clearInnerWindow() {
-		
+	protected void  closeInnerWindow() {
+		super.closeInnerWindow();
 	}
 
 	/**
@@ -2290,7 +2289,7 @@ public class FoolListView extends AbsFoolView {
     }
 	
 	@Override
-	protected boolean smoothBackTo(int backDelta) {
+	protected boolean pullBack(int backDelta) {
 		System.out.println("smoothBackTo " + backDelta) ;
 		
 		View tempView;

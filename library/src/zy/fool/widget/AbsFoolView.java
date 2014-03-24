@@ -235,7 +235,8 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
      */
     static final int PULL_OUT = 1;
     static final int PULL_IN = 2;
-    
+    static final int PULL_REST = -1;
+     
    /**
 	 * mSlideMode
 	 */
@@ -441,7 +442,9 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
     int mInnerWindowWidth;
     int mInnerWindowHeight;
 	
-	int mPullMode = -1;
+	int mCurrentPullMode = PULL_REST;
+	
+	int mLastPullMode = PULL_REST;
 	
 	RectF tempPulledRectF ;
 	
@@ -1532,7 +1535,7 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 
 	}
 	
-	private boolean startSmoothPullIfNeeded(RectF tempRectF){
+	private boolean startPullIfNeeded(RectF tempRectF){
         final int deltaY = (int) (y - mMotionY);
         boolean ispull = false;
 
@@ -1575,31 +1578,30 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 		return ispull;
 	}
 	
-	void smoothPullIfNeeded(int y){
+	void pullIfNeeded(int y){
 		
 		final int rawPullDelta =Math.abs(y-mMotionY);
 		final int pullDelta = rawPullDelta -mMotionCorrection;
 		final int pullDistance = Math.abs(y-mInitY);
 		
 		boolean pullingTag = pullDistance<mInnerWindowHeight/FRICTION?true:false;
-		System.out.println("smoothPullIfNeeded rawPullDelta" + rawPullDelta);
-		System.out.println("smoothPullIfNeeded pullDelta" + pullDelta);
-		System.out.println("smoothPullIfNeeded pullDistance" + pullDistance);
-		System.out.println("smoothPullIfNeeded mInnerWindowHeight" + mInnerWindowHeight);
-		
+//		
+//		System.out.println("smoothPullIfNeeded rawPullDelta" + rawPullDelta);
+//		System.out.println("smoothPullIfNeeded pullDelta" + pullDelta);
+//		System.out.println("smoothPullIfNeeded pullDistance" + pullDistance);
+//		System.out.println("smoothPullIfNeeded mInnerWindowHeight" + mInnerWindowHeight);
+//		
 		int incremetalPullDelta = mLastY != Integer.MIN_VALUE?Math.abs(y-mLastY):pullDelta;
 		
 		if(pullingTag){
 			pullTo(incremetalPullDelta);
 		}else {
 			mTouchMode = TOUCH_MODE_OVERPULL;
-			System.out.println("smoothPullIfNeeded PullDistnace is max");
 		}
-		
 		mLastY = y;
 	}
 		
-	protected boolean smoothBackTo(int backDelta) {
+	protected boolean pullBack(int backDelta) {
 		System.out.println("super smoothBackTo");
 		return false;
 	}
@@ -1830,11 +1832,12 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 	    			mActivePointerId = event.getPointerId(0);
 	    			
 	    			if (!mDataChanged) {
-	    		    	if ((mTouchMode != TOUCH_MODE_PULLING) && (motionPosition >= 0) && (getAdapter().isEnabled(motionPosition))) {
+	    				//out of pull-status
+	    		    	if ((mLastPullMode != 1)&&(mTouchMode != TOUCH_MODE_PULLING) && (motionPosition >= 0) && (getAdapter().isEnabled(motionPosition))) {
 	    		           // User clicked on an actual view (and was not stopping a fling).
 	    		           // It might be a click or a scroll. Assume it is a click until
 	                       // proven otherwise
-	
+	    		    	   
 	    		    	   mTouchMode = TOUCH_MODE_DOWN;
 	
 	    		    	   // FIXME Debounce
@@ -1883,22 +1886,26 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
     			case TOUCH_MODE_DOWN:
     			case TOUCH_MODE_TAP:
     			case TOUCH_MODE_DONE_WAITING:{
+    				
     				if(!mDataChanged&&action!=MotionEvent.ACTION_CANCEL&&action!=MotionEvent.ACTION_UP){
     					boolean handlePulled = false;
         				
     					if(canPull&&tempPulledRectF!=null){
-    						handlePulled = startSmoothPullIfNeeded(tempPulledRectF);
+    						handlePulled = startPullIfNeeded(tempPulledRectF);
     					}
        				
         				//check if we have moved far enough that it looks more like a scroll than a tap item scroll
-        				if(!handlePulled&&mLayoutMode!=LAYOUT_PULLING){
-        					startScrollItemIfNeeded((int)x,(int)y);
+        				//in pull-status ,can not scroll item
+    					if((mLastPullMode != 1)&&!handlePulled&&mLayoutMode!=LAYOUT_PULLING){
+        					System.out.println("mPullMode " + mCurrentPullMode);
+        					
+    						startScrollItemIfNeeded((int)x,(int)y);
         				}
         			}
         			break;
     			}
     			case TOUCH_MODE_PULL:
-    				switch (mPullMode) {
+    				switch (mCurrentPullMode) {
 					case PULL_OUT:
 						if(mAboverPulledViewInfos.isEmpty()&&mBelowerPulledViewInfos.isEmpty()&&mPulledPosistion<0){
 							mPulledPosistion = pointToPosition(mInitX, mInitY);
@@ -1911,12 +1918,20 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 						mTouchMode = TOUCH_MODE_OVERPULL;
 					break;
 					}
-    				
     			break;
     			case TOUCH_MODE_PULLING:
-    				smoothPullIfNeeded((int)y);
+    				//No-repeat 
+    				if(mCurrentPullMode != mLastPullMode){
+    					System.out.println("mCurrentPullMode " + mCurrentPullMode);
+    					System.out.println("mLastPullMode " + mLastPullMode);
+    					
+    					pullIfNeeded((int)y);
+    				}
     	    	break;
     			case TOUCH_MODE_OVERPULL:
+    				if(mCurrentPullMode != mLastPullMode&&mLastPullMode == PULL_OUT){
+    					closeInnerWindow();
+    				}
     				break;
     			case TOUCH_MODE_SLIDE:
     			case TOUCH_MODE_OVERSLIDE:
@@ -1931,7 +1946,8 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
     		System.out.println("ACTION_UP");
     		System.out.println("mTouchMode " +mTouchMode);
     		System.out.println("mLayoutMode " +mLayoutMode);
-    		System.out.println("mPullMode " +mPullMode);
+    		System.out.println("mCurrentPullMode " +mCurrentPullMode);
+    		System.out.println("mLastPullMode " +mLastPullMode);
     		
     		switch (mTouchMode) {
     		
@@ -2019,30 +2035,19 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 	  			case TOUCH_MODE_PULLING:
 	  			case TOUCH_MODE_OVERPULL:
 	  			{
-	  				int rebackPullDistance = mRawPullDistance -(mInnerWindowHeight-mPulledItemHeight)/2;
-	  				if(mRawPullDistance>0){
-	  					//大于，则返回
-	  					smoothBackTo(mRawPullDistance);
-	  				}
-//	  				if(mRawPullDistance<0){
-//	  					//小于，不够，则直至
-//	  					smoothPullBackIfNeed(rebackPullDistance,SMOOTH_PULL_DURATION_MS,0,null);
-//	  				}
+	  				if(mCurrentPullMode!=mLastPullMode) {
+	  					if(mRawPullDistance>0){
+		  					//大于，则返回
+		  					pullBack(mRawPullDistance);
+		  				}
+		  				if(mRawPullDistance<0){
+		  					//小于，不够，则直至
+		  					pullBack(mRawPullDistance);
+		  				}
+	  				} 
 	  				
-//	  				if(mCurrentSmoothPulledRunnable!=null){
-//	  					mCurrentSmoothPulledRunnable.stop();
-//	  				}
-//	  				removeCallbacks(mCurrentSmoothPulledRunnable);
-//	  				
-//	  				if(mInnerWindow!=null){
-//						clearInnerWindow();
-//						tempPulledRectF = null;
-//						mPullMode = -1;
-//						mLayoutMode = LAYOUT_SET_SELECTION;
-//						requestLayout();
-//					}
-//	  				
-//	  				mTouchMode = TOUCH_MODE_REST;
+	  				mLastPullMode = mCurrentPullMode;
+	  				canPull = false;
 	  				
 	  				break;
                 }
@@ -2222,10 +2227,10 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
    			// the specified rectangle r is inside or equal to this rectangle.
    			if(r.bottom>r0.bottom&&r.top<r0.top){
    				ispull = true;
-   				mPullMode = PULL_OUT;
+   				mCurrentPullMode = PULL_OUT;
    			}else if(r.bottom<r0.bottom&&r.top>r0.top){
    				ispull = true;
-   				mPullMode = PULL_IN;
+   				mCurrentPullMode = PULL_IN;
    			}
    		}else {
    			//System.out.println("NO PulledMotion"); 			
@@ -4060,17 +4065,39 @@ public abstract class AbsFoolView extends FoolAdapterView<ListAdapter>{
 		mInnerWindow = mInnerPolicy.getInnerWindow();
 	}
 
-	protected void clearInnerWindow(){	
-		System.out.println("clearInnerWindow ");
+	protected void closeInnerWindow() {
 		
-		if(mAboverPulledViewInfos.size()>0||mBelowerPulledViewInfos.size()>0){
-			mAboverPulledViewInfos.clear();
-			System.out.println("mAboverPulledViewInfos isemty" + mAboverPulledViewInfos.isEmpty());
-			mBelowerPulledViewInfos.clear();
-		}
 		mPulledPosistion = INVALID_POSITION;
+		mCurrentPullMode = PULL_REST;
+		mLastPullMode = PULL_IN;
+		mTouchMode = TOUCH_MODE_REST;
+		
+		if (tempPulledRectF != null)
+			tempPulledRectF = null;
 		
 		if(mInnerWindow!=null)
 			mInnerWindow = null;
+		
+		Runnable closeRunnable = new Runnable() {
+			
+			@Override
+			public void run() {
+				System.out.println("closeInnerWindow Runnable");
+				
+				if(mAboverPulledViewInfos.size()>0||mBelowerPulledViewInfos.size()>0){
+					mAboverPulledViewInfos.clear();
+					System.out.println("mAboverPulledViewInfos isemty" + mAboverPulledViewInfos.isEmpty());
+					mBelowerPulledViewInfos.clear();
+				}
+				
+				mLayoutMode = LAYOUT_PREVIEW;
+				//mFirstPosition = 0;
+				mSelectedPosition = mFirstPosition;
+				detachAllViewsFromParent();
+				layoutChildren();
+			}
+		};
+		
+		postDelayed(closeRunnable, PULLING_TIME);
 	}
 }
